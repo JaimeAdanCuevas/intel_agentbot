@@ -7,7 +7,7 @@ on:
 
 jobs:
   main:
-    runs-on: self-hosted # specify your self-hosted runner here
+    runs-on: ubuntu-latest # specify your self-hosted runner here
     steps:
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
