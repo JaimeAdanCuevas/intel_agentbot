@@ -51,9 +51,10 @@ def extract_branch_coverage(file_path):
 
         return branch_counter
 
+
 def generate_coverage_report(instruction_coverage, branch_coverage):
     report_file = "coverage_report.csv"
-    
+
     # Escribir encabezados si el archivo no existe
     file_exists = False
     try:
@@ -64,15 +65,15 @@ def generate_coverage_report(instruction_coverage, branch_coverage):
 
     # Datos de instrucciones
     instruction_data = [{"timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                          "instruction": inst,
-                          "execution_count": count,
-                          "decoded_instruction": decode_instruction(inst)}
+                         "instruction": inst,
+                         "execution_count": count,
+                         "decoded_instruction": decode_instruction(inst)}
                          for inst, count in instruction_coverage.items()]
 
     # Datos de ramas
     branch_data = [{"timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "branch": branch, "execution_count": count}
-                   for branch, count in branch_coverage.items()]
+                    for branch, count in branch_coverage.items()]
 
     # Escribir el reporte en el CSV
     with open(report_file, 'a', newline='') as f:
@@ -81,7 +82,7 @@ def generate_coverage_report(instruction_coverage, branch_coverage):
             writer.writeheader()
         writer.writerows(instruction_data)
         writer.writerows(branch_data)
-    
+
     print("Reporte de cobertura generado con éxito.")
 
 # Ejecutar el análisis de cobertura de instrucciones y ramas
