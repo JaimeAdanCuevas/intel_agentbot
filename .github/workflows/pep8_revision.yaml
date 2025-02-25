@@ -8,7 +8,6 @@ on:
 jobs:
   main:
     runs-on: self-hosted # specify your self-hosted runner here
-    if: github.repository == 'JaimeAdanCuevas/intel_agentbot.git'
     steps:
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
