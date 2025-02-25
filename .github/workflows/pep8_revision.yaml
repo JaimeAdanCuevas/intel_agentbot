@@ -1,0 +1,37 @@
+name: PEP8 Lint
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  main:
+    runs-on: self-hosted # specify your self-hosted runner here
+    if: github.repository == 'JaimeAdanCuevas/intel_agentbot.git'
+    steps:
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Get list of files
+      id: files
+      uses: actions/github-script@v5
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+          const files = await github.rest.pulls.listFiles({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: pr.number,
+          });
+          return files.data.map(f => f.filename).filter(f => f.endsWith('.py')).join(' ');
+    - name: Review files with Flake8
+      run: |
+        flake8 ${{ steps.files.outputs.files }}  --max-line-length=120 .
