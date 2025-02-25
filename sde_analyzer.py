@@ -15,6 +15,7 @@ def decode_instruction(instruction_hex):
     except Exception as e:
         return f"Error al decodificar: {e}"
 
+
 def extract_instruction_coverage(file_path):
     with open(file_path, 'r') as file:
         data = file.readlines()
@@ -23,7 +24,7 @@ def extract_instruction_coverage(file_path):
 
     # Buscar las instrucciones ejecutadas en el archivo de salida
     instruction_pattern = re.compile(r"^Executed instruction: ([0-9A-Fa-f ]+)")
-    
+
     for line in data:
         match = instruction_pattern.match(line)
         if match:
@@ -31,6 +32,7 @@ def extract_instruction_coverage(file_path):
             instruction_counter[instruction] += 1
 
     return instruction_counter
+
 
 def extract_branch_coverage(file_path):
     with open(file_path, 'r') as file:
@@ -40,14 +42,14 @@ def extract_branch_coverage(file_path):
 
     # Buscar las ramas ejecutadas en el archivo de salida
     branch_pattern = re.compile(r"^Branch executed: (\S+)")
-    
+
     for line in data:
         match = branch_pattern.match(line)
         if match:
             branch_address = match.group(1)
             branch_counter[branch_address] += 1
 
-    return branch_counter
+        return branch_counter
 
 def generate_coverage_report(instruction_coverage, branch_coverage):
     report_file = "coverage_report.csv"
