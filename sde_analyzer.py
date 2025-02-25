@@ -65,15 +65,14 @@ def generate_coverage_report(instruction_coverage, branch_coverage):
 
     # Datos de instrucciones
     instruction_data = [{"timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                         "instruction": inst,
-                         "execution_count": count,
+                         "instruction": inst, "execution_count": count,
                          "decoded_instruction": decode_instruction(inst)}
-                         for inst, count in instruction_coverage.items()]
+                        for inst, count in instruction_coverage.items()]
 
     # Datos de ramas
     branch_data = [{"timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "branch": branch, "execution_count": count}
-                    for branch, count in branch_coverage.items()]
+                   for branch, count in branch_coverage.items()]
 
     # Escribir el reporte en el CSV
     with open(report_file, 'a', newline='') as f:
@@ -84,6 +83,7 @@ def generate_coverage_report(instruction_coverage, branch_coverage):
         writer.writerows(branch_data)
 
     print("Reporte de cobertura generado con éxito.")
+
 
 # Ejecutar el análisis de cobertura de instrucciones y ramas
 instruction_coverage = extract_instruction_coverage('coverage_output.txt')
