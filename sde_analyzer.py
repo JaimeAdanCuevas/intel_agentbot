@@ -4,6 +4,7 @@ from collections import Counter
 import csv
 import datetime
 
+
 def decode_instruction(instruction_hex):
     """Decodificar la instrucción hexadecimal usando `xed`."""
     try:
