@@ -1,104 +1,181 @@
 import re
 import subprocess
-from collections import Counter
 import csv
 import datetime
+import os
+import logging
+import sys
+import getopt
+from collections import Counter
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 def decode_instruction(instruction_hex):
-    """Decodificar la instrucción hexadecimal usando `xed`."""
+    """Decode hexadecimal instruction using xed."""
     try:
-        # Ejecutar el comando xed para decodificar la instrucción
-        result = subprocess.run(['xed', '-decode', instruction_hex], capture_output=True, text=True)
-        decoded_instruction = result.stdout.strip()
-        return decoded_instruction
+        logger.debug(f"Decoding instruction: {instruction_hex}")
+        result = subprocess.run(['./xed', '-64', '-d', instruction_hex], 
+                               capture_output=True, text=True, check=True)
+        decoded = result.stdout.strip().split('\n')[-1]
+        logger.debug(f"Decoded successfully: {decoded}")
+        return decoded
+    except subprocess.CalledProcessError as e:
+        logger.error(f"xed decode failed for '{instruction_hex}': {e.stderr}")
+        return "DECODE_ERROR"
     except Exception as e:
-        return f"Error al decodificar: {e}"
-
+        logger.error(f"Decoding error: {str(e)}")
+        return "DECODE_ERROR"
 
 def extract_instruction_coverage(file_path):
-    with open(file_path, 'r') as file:
-        data = file.readlines()
+    """Extract instruction coverage from SDE mix output."""
+    logger.info(f"Processing instruction coverage from: {file_path}")
+    counter = Counter()
+    try:
+        with open(file_path, 'r') as f:
+            current_executions = 0
+            block_re = re.compile(r'BLOCK:\s+\d+.*EXECUTIONS:\s+(\d+)')
+            xdis_re = re.compile(r'^XDIS\s+\S+:\s+\S+\s+([0-9A-Fa-f]+)')
 
-    instruction_counter = Counter()
+            for line in f:
+                # Track current block executions
+                if block_match := block_re.search(line):
+                    current_executions = int(block_match.group(1))
+                    logger.debug(f"New block with executions: {current_executions}")
+                    continue
+                
+                # Process XDIS lines
+                if xdis_match := xdis_re.match(line):
+                    hex_str = xdis_match.group(1).upper()
+                    counter[hex_str] += current_executions
+                    logger.debug(f"Found instruction: {hex_str} x{current_executions}")
 
-    # Buscar las instrucciones ejecutadas en el archivo de salida
-    instruction_pattern = re.compile(r"^Executed instruction: ([0-9A-Fa-f ]+)")
-
-    for line in data:
-        match = instruction_pattern.match(line)
-        if match:
-            instruction = match.group(1).strip()
-            instruction_counter[instruction] += 1
-
-    return instruction_counter
-
+        logger.info(f"Found {len(counter)} unique instructions")
+        return counter
+    except Exception as e:
+        logger.error(f"Instruction extraction failed: {str(e)}")
+        return Counter()
 
 def extract_branch_coverage(file_path):
-    with open(file_path, 'r') as file:
-        data = file.readlines()
+    """Extract branch coverage from SDE mix output."""
+    logger.info(f"Processing branch coverage from: {file_path}")
+    counter = Counter()
+    try:
+        with open(file_path, 'r') as f:
+            current_executions = 0
+            block_re = re.compile(r'BLOCK:\s+\d+.*EXECUTIONS:\s+(\d+)')
+            branch_re = re.compile(
+                r'^XDIS\s+\S+:\s+\S+\s+([0-9A-Fa-f]+).*\s(j[a-z]+|call|ret|loop)\b', 
+                re.IGNORECASE
+            )
 
-    branch_counter = Counter()
+            for line in f:
+                if block_match := block_re.search(line):
+                    current_executions = int(block_match.group(1))
+                    continue
+                
+                if branch_match := branch_re.search(line):
+                    hex_str = branch_match.group(1).upper()
+                    counter[hex_str] += current_executions
+                    logger.debug(f"Found branch: {hex_str} x{current_executions}")
 
-    # Buscar las ramas ejecutadas en el archivo de salida
-    branch_pattern = re.compile(r"^Branch executed: (\S+)")
+        logger.info(f"Found {len(counter)} branch instructions")
+        return counter
+    except Exception as e:
+        logger.error(f"Branch extraction failed: {str(e)}")
+        return Counter()
 
-    for line in data:
-        match = branch_pattern.match(line)
-        if match:
-            branch_address = match.group(1)
-            branch_counter[branch_address] += 1
+def generate_coverage_report(instructions, branches, report_file):
+    """Generate CSV coverage report."""
+    logger.info(f"Generating report: {report_file}")
+    try:
+        file_exists = os.path.exists(report_file)
+        with open(report_file, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            if not file_exists:
+                writer.writerow([
+                    'Timestamp', 'Type', 'Hex', 
+                    'Count', 'Decoded', 'Context'
+                ])
 
-        return branch_counter
+            timestamp = datetime.datetime.now().isoformat()
+            
+            # Write instructions
+            for hex_str, count in instructions.items():
+                decoded = decode_instruction(hex_str)
+                writer.writerow([
+                    timestamp, 'INSTRUCTION', hex_str,
+                    count, decoded, ''
+                ])
+            
+            # Write branches
+            for hex_str, count in branches.items():
+                decoded = decode_instruction(hex_str)
+                writer.writerow([
+                    timestamp, 'BRANCH', hex_str,
+                    count, decoded, ''
+                ])
 
+        logger.info(f"Report generated with {len(instructions)+len(branches)} entries")
+    except Exception as e:
+        logger.error(f"Report generation failed: {str(e)}")
 
-def generate_coverage_report(instruction_coverage, branch_coverage):
+def main(spec_file, sde_output, report_file):
+    """Main processing workflow."""
+    if not os.path.exists(sde_output):
+        logger.critical(f"SDE output file not found: {sde_output}")
+        sys.exit(1)
+
+    logger.info("Starting coverage analysis...")
+    instructions = extract_instruction_coverage(sde_output)
+    branches = extract_branch_coverage(sde_output)
+
+    if not instructions and not branches:
+        logger.warning("No coverage data found in input file")
+        return
+
+    # Print top findings to console
+    if instructions:
+        print("\nTop Instructions:")
+        for hex_str, count in instructions.most_common(10):
+            print(f"{hex_str:8} x{count:8} → {decode_instruction(hex_str)}")
+
+    if branches:
+        print("\nTop Branches:")
+        for hex_str, count in branches.most_common(10):
+            print(f"{hex_str:8} x{count:8} → {decode_instruction(hex_str)}")
+
+    generate_coverage_report(instructions, branches, report_file)
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt.getopt(
+            sys.argv[1:], 
+            "hs:o:r:", 
+            ["help", "spec=", "output=", "report="]
+        )
+    except getopt.GetoptError as err:
+        logger.error(f"Invalid arguments: {err}")
+        sys.exit(2)
+
+    spec_file = ""
+    sde_output = ""
     report_file = "coverage_report.csv"
 
-    # Escribir encabezados si el archivo no existe
-    file_exists = False
-    try:
-        with open(report_file, 'r') as f:
-            file_exists = True
-    except FileNotFoundError:
-        pass
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print("Usage: python sde_analyzer.py -s <spec> -o <sde_output> [-r <report.csv>]")
+            sys.exit()
+        elif opt in ("-s", "--spec"):
+            spec_file = arg
+        elif opt in ("-o", "--output"):
+            sde_output = arg
+        elif opt in ("-r", "--report"):
+            report_file = arg
 
-    # Datos de instrucciones
-    instruction_data = [{"timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                         "instruction": inst, "execution_count": count,
-                         "decoded_instruction": decode_instruction(inst)}
-                        for inst, count in instruction_coverage.items()]
+    if not sde_output:
+        logger.critical("Missing required SDE output file (-o)")
+        sys.exit(2)
 
-    # Datos de ramas
-    branch_data = [{"timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "branch": branch, "execution_count": count}
-                   for branch, count in branch_coverage.items()]
-
-    # Escribir el reporte en el CSV
-    with open(report_file, 'a', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=["timestamp", "instruction", "execution_count", "decoded_instruction"])
-        if not file_exists:
-            writer.writeheader()
-        writer.writerows(instruction_data)
-        writer.writerows(branch_data)
-
-    print("Reporte de cobertura generado con éxito.")
-
-
-# Ejecutar el análisis de cobertura de instrucciones y ramas
-instruction_coverage = extract_instruction_coverage('coverage_output.txt')
-branch_coverage = extract_branch_coverage('coverage_output.txt')
-
-# Mostrar las instrucciones más ejecutadas
-print("Instrucciones más ejecutadas:")
-for instruction, count in instruction_coverage.most_common(10):
-    decoded = decode_instruction(instruction)
-    print(f"Instrucción: {instruction}, Ejecutada: {count} veces, Decodificada: {decoded}")
-
-# Mostrar las ramas más ejecutadas
-print("\nRamas más ejecutadas:")
-for branch, count in branch_coverage.most_common(10):
-    print(f"Rama: {branch}, Ejecutada: {count} veces")
-
-# Generar el reporte de cobertura
-generate_coverage_report(instruction_coverage, branch_coverage)
+    main(spec_file, sde_output, report_file)
