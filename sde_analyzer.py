@@ -9,8 +9,7 @@ import getopt
 from collections import Counter
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - \
-                    %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
 
@@ -45,16 +44,14 @@ def extract_instruction_coverage(file_path):
                 # Track current block executions
                 if block_match := block_re.search(line):
                     current_executions = int(block_match.group(1))
-                    logger.debug(f"New block with executions: \
-                                 {current_executions}")
+                    logger.debug(f"New block with executions: {current_executions}")
                     continue
 
                 # Process XDIS lines
                 if xdis_match := xdis_re.match(line):
                     hex_str = xdis_match.group(1).upper()
                     counter[hex_str] += current_executions
-                    logger.debug(f"Found instruction: {hex_str} \
-                                 x{current_executions}")
+                    logger.debug(f"Found instruction: {hex_str} x{current_executions}")
 
         logger.info(f"Found {len(counter)} unique instructions")
         return counter
@@ -72,8 +69,7 @@ def extract_branch_coverage(file_path):
             current_executions = 0
             block_re = re.compile(r'BLOCK:\s+\d+.*EXECUTIONS:\s+(\d+)')
             branch_re = re.compile(
-                r'^XDIS\s+\S+:\s+\S+\s+([0-9A-Fa-f]+).\
-                    *\s(j[a-z]+|call|ret|loop)\b',
+                r'^XDIS\s+\S+:\s+\S+\s+([0-9A-Fa-f]+).*\s(j[a-z]+|call|ret|loop)\b',
                 re.IGNORECASE
             )
 
@@ -85,8 +81,7 @@ def extract_branch_coverage(file_path):
                 if branch_match := branch_re.search(line):
                     hex_str = branch_match.group(1).upper()
                     counter[hex_str] += current_executions
-                    logger.debug(f"Found branch: {hex_str} \
-                                 x{current_executions}")
+                    logger.debug(f"Found branch: {hex_str} x{current_executions}")
 
         logger.info(f"Found {len(counter)} branch instructions")
         return counter
@@ -126,8 +121,7 @@ def generate_coverage_report(instructions, branches, report_file):
                     count, decoded, ''
                 ])
 
-        logger.info(f"Report generated with \
-                    {len(instructions) + len(branches)} entries")
+        logger.info(f"Report generated with {len(instructions)+len(branches)} entries")
     except Exception as e:
         logger.error(f"Report generation failed: {str(e)}")
 
@@ -177,8 +171,7 @@ if __name__ == "__main__":
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print("Usage: python sde_analyzer.py -s <spec> -o <sde_output> \
-                  [-r <report.csv>]")
+            print("Usage: python sde_analyzer.py -s <spec> -o <sde_output> [-r <report.csv>]")
             sys.exit()
         elif opt in ("-s", "--spec"):
             spec_file = arg
