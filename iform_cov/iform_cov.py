@@ -13,8 +13,10 @@ global_set = {}
 exe_results_set = {}
 spec_loaded = 0
 
+
 def insert_space(string, every=4):
     return ' '.join(string[i:i+every] for i in range(0, len(string), every))
+
 
 def printplus(obj):
     """
@@ -34,6 +36,7 @@ def printplus(obj):
     else:
         print(obj)
 
+
 def csv_ize(obj):
     row = ''
     if isinstance(obj, dict):
@@ -45,6 +48,7 @@ def csv_ize(obj):
     else:
         row = row + obj + ' , '
     return row
+
 
 def listify(obj):
     row = []
@@ -58,6 +62,7 @@ def listify(obj):
         row.append(obj)
     return row
 
+
 def pretty_ize(obj):
     row = ''
     if isinstance(obj, dict):
@@ -70,6 +75,7 @@ def pretty_ize(obj):
     else:
         row = row + str(obj) + '\n'
     return row
+
 
 def print_report(exefile, result_set):
     filename = exefile.replace('.exe', '.csv')
@@ -99,6 +105,7 @@ def print_report(exefile, result_set):
             list_items = []
             row += 1
             count = 0
+
 
 def process_sde_output(exefile, sde_output):
     global iform_set
@@ -131,6 +138,7 @@ def process_sde_output(exefile, sde_output):
     # Print the file results
     print_report(exefile, exe_results_set[exefile])
 
+
 def execute_profiling(dir, exefile, params):
     sde_command = 'sde -mix -iform -- ' + exefile + ' ' + params
     sde_output_default = 'sde-mix-out.txt'
@@ -147,6 +155,7 @@ def execute_profiling(dir, exefile, params):
         shutil.move(sde_output_default, sde_output_file)
         print(sde_output_file + ' generated! Processing it.')
         process_sde_output(exefile, sde_output_file)
+
 
 # Loads the XED IFORM list (an ASCII table)
 def process_spec(spec):
@@ -170,6 +179,7 @@ def process_spec(spec):
                     print('Headers are : ' + ' , '.join(headers))
     spec_loaded = 1
 
+
 def process_directory(dir):
     global spec_loaded
     params = ''
@@ -189,6 +199,7 @@ def process_directory(dir):
         os.chdir(dir)
         execute_profiling(dir, file, params) 
         params = ''
+
 
 def main(argv):
     global global_set
@@ -216,6 +227,7 @@ def main(argv):
             # print(pretty_ize(global_set))
             print_report('global_result.exe', global_set)
     print('Input dir is ', inputdir)
+
 
 if __name__ == "__main__":
     params = len(sys.argv)

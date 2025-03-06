@@ -9,15 +9,17 @@ import getopt
 from collections import Counter
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - \
+                    %(levelname)s - %(message)s')
 logger = logging.getLogger()
+
 
 def decode_instruction(instruction_hex):
     """Decode hexadecimal instruction using xed."""
     try:
         logger.debug(f"Decoding instruction: {instruction_hex}")
-        result = subprocess.run(['./xed', '-64', '-d', instruction_hex], 
-                               capture_output=True, text=True, check=True)
+        result = subprocess.run(['./xed', '-64', '-d', instruction_hex],
+                                capture_output=True, text=True, check=True)
         decoded = result.stdout.strip().split('\n')[-1]
         logger.debug(f"Decoded successfully: {decoded}")
         return decoded
@@ -27,6 +29,7 @@ def decode_instruction(instruction_hex):
     except Exception as e:
         logger.error(f"Decoding error: {str(e)}")
         return "DECODE_ERROR"
+
 
 def extract_instruction_coverage(file_path):
     """Extract instruction coverage from SDE mix output."""
@@ -42,20 +45,23 @@ def extract_instruction_coverage(file_path):
                 # Track current block executions
                 if block_match := block_re.search(line):
                     current_executions = int(block_match.group(1))
-                    logger.debug(f"New block with executions: {current_executions}")
+                    logger.debug(f"New block with executions: \
+                                 {current_executions}")
                     continue
-                
+
                 # Process XDIS lines
                 if xdis_match := xdis_re.match(line):
                     hex_str = xdis_match.group(1).upper()
                     counter[hex_str] += current_executions
-                    logger.debug(f"Found instruction: {hex_str} x{current_executions}")
+                    logger.debug(f"Found instruction: {hex_str} \
+                                 x{current_executions}")
 
         logger.info(f"Found {len(counter)} unique instructions")
         return counter
     except Exception as e:
         logger.error(f"Instruction extraction failed: {str(e)}")
         return Counter()
+
 
 def extract_branch_coverage(file_path):
     """Extract branch coverage from SDE mix output."""
@@ -66,7 +72,8 @@ def extract_branch_coverage(file_path):
             current_executions = 0
             block_re = re.compile(r'BLOCK:\s+\d+.*EXECUTIONS:\s+(\d+)')
             branch_re = re.compile(
-                r'^XDIS\s+\S+:\s+\S+\s+([0-9A-Fa-f]+).*\s(j[a-z]+|call|ret|loop)\b', 
+                r'^XDIS\s+\S+:\s+\S+\s+([0-9A-Fa-f]+).\
+                    *\s(j[a-z]+|call|ret|loop)\b',
                 re.IGNORECASE
             )
 
@@ -74,17 +81,19 @@ def extract_branch_coverage(file_path):
                 if block_match := block_re.search(line):
                     current_executions = int(block_match.group(1))
                     continue
-                
+
                 if branch_match := branch_re.search(line):
                     hex_str = branch_match.group(1).upper()
                     counter[hex_str] += current_executions
-                    logger.debug(f"Found branch: {hex_str} x{current_executions}")
+                    logger.debug(f"Found branch: {hex_str} \
+                                 x{current_executions}")
 
         logger.info(f"Found {len(counter)} branch instructions")
         return counter
     except Exception as e:
         logger.error(f"Branch extraction failed: {str(e)}")
         return Counter()
+
 
 def generate_coverage_report(instructions, branches, report_file):
     """Generate CSV coverage report."""
@@ -95,12 +104,12 @@ def generate_coverage_report(instructions, branches, report_file):
             writer = csv.writer(csvfile)
             if not file_exists:
                 writer.writerow([
-                    'Timestamp', 'Type', 'Hex', 
+                    'Timestamp', 'Type', 'Hex',
                     'Count', 'Decoded', 'Context'
                 ])
 
             timestamp = datetime.datetime.now().isoformat()
-            
+
             # Write instructions
             for hex_str, count in instructions.items():
                 decoded = decode_instruction(hex_str)
@@ -108,7 +117,7 @@ def generate_coverage_report(instructions, branches, report_file):
                     timestamp, 'INSTRUCTION', hex_str,
                     count, decoded, ''
                 ])
-            
+
             # Write branches
             for hex_str, count in branches.items():
                 decoded = decode_instruction(hex_str)
@@ -117,9 +126,11 @@ def generate_coverage_report(instructions, branches, report_file):
                     count, decoded, ''
                 ])
 
-        logger.info(f"Report generated with {len(instructions)+len(branches)} entries")
+        logger.info(f"Report generated with \
+                    {len(instructions) + len(branches)} entries")
     except Exception as e:
         logger.error(f"Report generation failed: {str(e)}")
+
 
 def main(spec_file, sde_output, report_file):
     """Main processing workflow."""
@@ -148,11 +159,12 @@ def main(spec_file, sde_output, report_file):
 
     generate_coverage_report(instructions, branches, report_file)
 
+
 if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(
-            sys.argv[1:], 
-            "hs:o:r:", 
+            sys.argv[1:],
+            "hs:o:r:",
             ["help", "spec=", "output=", "report="]
         )
     except getopt.GetoptError as err:
@@ -165,7 +177,8 @@ if __name__ == "__main__":
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print("Usage: python sde_analyzer.py -s <spec> -o <sde_output> [-r <report.csv>]")
+            print("Usage: python sde_analyzer.py -s <spec> -o <sde_output> \
+                  [-r <report.csv>]")
             sys.exit()
         elif opt in ("-s", "--spec"):
             spec_file = arg
