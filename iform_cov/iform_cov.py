@@ -3,7 +3,6 @@
 import glob
 import os
 import shutil
-import binascii
 import sys
 import getopt
 import copy
@@ -27,7 +26,7 @@ def printplus(obj):
         for k, v in sorted(obj.items()):
             print('{0}: {1}'.format(k, v))
 
-    # List or tuple            
+    # List or tuple
     elif isinstance(obj, list) or isinstance(obj, tuple):
         for x in obj:
             print(x)
@@ -113,7 +112,6 @@ def process_sde_output(exefile, sde_output):
     global global_set
     global exe_results_set
     found_global_dynamic_stats = 0
-    headers = []
     exe_results_set[exefile] = copy.deepcopy(iform_set)
     with open(sde_output, 'r') as inF:
         for line in inF:
@@ -132,7 +130,8 @@ def process_sde_output(exefile, sde_output):
                             print(tokens[0] + ' is not in Global set!')
                         if tokens[0] in exe_results_set[exefile]:
                             print(tokens[0] + ' is in ' + exefile + ' set, adding count\n')
-                            exe_results_set[exefile][tokens[0]]['count'] = exe_results_set[exefile][tokens[0]]['count'] + int(tokens[1])
+                            exe_results_set[exefile][tokens[0]]['count'] \
+                                = exe_results_set[exefile][tokens[0]]['count'] + int(tokens[1])
                         else:
                             print(tokens[0] + ' is not in ' + exefile + ' set!')
     # Print the file results
@@ -194,10 +193,10 @@ def process_directory(dir):
             with open(params_file, 'r') as inF:
                 for line in inF:
                     params = params + line
-        except:
-            print('No params for ' + file + '\n')
+        except Exception as e:
+            print('No params for ' + file + 'error: ' + e + '\n')
         os.chdir(dir)
-        execute_profiling(dir, file, params) 
+        execute_profiling(dir, file, params)
         params = ''
 
 
