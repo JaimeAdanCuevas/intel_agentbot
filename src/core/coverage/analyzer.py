@@ -1,12 +1,12 @@
 """
-Enterprise Instruction Coverage Analyzer - Full Implementation
+Professional Instruction Coverage Analyzer - Final Working Version
 """
 
 import re
 import logging
 import yaml
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from collections import defaultdict
 
 # Configure logging
@@ -17,16 +17,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class CoverageAnalyzer:
-    """Intel Architecture Instruction Coverage Analysis System"""
+    """Intel Architecture Instruction Coverage Analysis Engine"""
     
     def __init__(self, spec_path: str):
         self.spec: Dict[str, Any] = self._load_validated_spec(Path(spec_path))
         self.instruction_counts = defaultdict(int)
         self.coverage_stats = self._init_coverage_stats()
-        logger.info(f"Initialized analyzer with {len(self.spec)} instructions")
+        logger.info(f"Analyzer initialized with {len(self.spec)} instructions")
 
     def _init_coverage_stats(self) -> Dict[str, Any]:
-        """Initialize coverage statistics structure with safe defaults"""
+        """Initialize coverage statistics with safe defaults"""
         return {
             'total_instructions': len(self.spec),
             'covered': 0,
@@ -40,14 +40,9 @@ class CoverageAnalyzer:
     def analyze(self, sde_file: Path) -> Dict[str, Any]:
         """Full analysis pipeline with error handling"""
         try:
-            if not sde_file.exists():
-                raise FileNotFoundError(f"SDE file not found: {sde_file}")
-            
-            logger.info(f"Processing SDE output: {sde_file}")
             self._process_sde_file(sde_file)
             self._calculate_coverage()
             return self.generate_report()
-            
         except Exception as e:
             logger.error(f"Analysis failed: {str(e)}", exc_info=True)
             raise
@@ -59,6 +54,9 @@ class CoverageAnalyzer:
         with open(sde_file, 'r', encoding='utf-8') as f:
             for line_number, line in enumerate(f, 1):
                 try:
+                    # Debug line processing
+                    print(f"Processing line: {line.strip()}")  # Debug
+                    
                     if line.startswith('BLOCK'):
                         current_executions = self._parse_executions(line)
                     elif line.startswith('XDIS'):
@@ -68,26 +66,25 @@ class CoverageAnalyzer:
                     continue
 
     def _parse_executions(self, line: str) -> int:
-        """Robust execution count extraction using regex"""
+        """Robust execution count extraction"""
         try:
             match = re.search(r'EXECUTIONS:\s*(\d+)', line)
             return int(match.group(1)) if match else 0
         except (AttributeError, ValueError) as e:
-            logger.warning(f"Failed to parse executions: {line.strip()}")
+            logger.warning(f"Execution count error: {str(e)}")
             return 0
 
     def _process_instruction(self, line: str, count: int):
-        """Process XDIS instruction line with validation"""
+        """Process XDIS instruction line"""
         try:
-            # Handle format: "XDIS 86: 0F 1F / 00      NOP"
-            _, instr_part = line.split(':', 1)
-            parts = instr_part.strip().split()
+            _, remainder = line.split(':', 1)
+            parts = remainder.strip().split()
             
             if len(parts) < 2:
                 raise ValueError("Insufficient instruction data")
             
             hex_str = parts[0].upper()
-            iform = parts[1]
+            iform = parts[-1].split(',')[0]  # Handle operand variations
             
             self.instruction_counts[hex_str] += count
             
@@ -110,7 +107,7 @@ class CoverageAnalyzer:
             logger.error(f"Missing spec entry for {iform}: {str(e)}")
 
     def _calculate_coverage(self):
-        """Calculate final coverage metrics with validation"""
+        """Calculate final coverage metrics"""
         try:
             total = self.coverage_stats['total_instructions']
             covered = self.coverage_stats['covered']
@@ -133,7 +130,7 @@ class CoverageAnalyzer:
             self.coverage_stats['coverage_percent'] = 0.0
 
     def generate_report(self) -> Dict[str, Any]:
-        """Generate comprehensive report with safe defaults"""
+        """Generate comprehensive coverage report"""
         try:
             top_category = (
                 max(self.coverage_stats['by_category'].items(), 
@@ -155,7 +152,7 @@ class CoverageAnalyzer:
             },
             'details': {
                 'uncovered_instructions': self.coverage_stats['uncovered'],
-                'top_instructions': [
+                'top_used_instructions': [
                     {'hex': k, 'count': v} 
                     for k, v in self.coverage_stats['top_instructions']
                 ],
@@ -214,7 +211,7 @@ class CoverageAnalyzer:
         return spec
 
 if __name__ == '__main__':
-    """Command-line execution entry point"""
+    """Command-line execution example"""
     try:
         analyzer = CoverageAnalyzer('config/instruction_specs/x86_64.yaml')
         report = analyzer.analyze(Path('tests/integration/data/cg.A.AVX2-mix-out.txt'))
