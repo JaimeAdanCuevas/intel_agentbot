@@ -1,13 +1,17 @@
-.PHONY: all test analyze clean
+.PHONY: all test analyze stress-ng clean
 
-all: test analyze
+all: test analyze stress-ng
 
 test:
-	@pytest -v tests/
+	. .venv/bin/activate && PYTHONPATH=$(PWD) pytest -v tests/
 
 analyze:
-	@python -m src.core.coverage.analyzer
+	. .venv/bin/activate && PYTHONPATH=$(PWD) python -m src.core.coverage.analyzer --sde-file tests/integration/data/cg.A.AVX2-mix-out.txt
+
+stress-ng:
+	./scripts/deployment/run_stress_ng_sde.sh
+	. .venv/bin/activate && PYTHONPATH=$(PWD) python -m src.core.coverage.analyzer --sde-file tests/integration/data/stress-ng-cpu-mix-out.txt
 
 clean:
-	@find . -name '*.pyc' -delete
-	@rm -rf __pycache__/
+	find . -name '*.pyc' -delete
+	rm -rf __pycache__/

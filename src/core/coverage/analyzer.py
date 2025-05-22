@@ -5,6 +5,7 @@ Professional Instruction Coverage Analyzer - Final Working Version
 import re
 import logging
 import yaml
+import argparse
 from pathlib import Path
 from typing import Dict, List, Any
 from collections import defaultdict
@@ -54,9 +55,6 @@ class CoverageAnalyzer:
         with open(sde_file, 'r', encoding='utf-8') as f:
             for line_number, line in enumerate(f, 1):
                 try:
-                    # Debug line processing
-                    print(f"Processing line: {line.strip()}")  # Debug
-                    
                     if line.startswith('BLOCK'):
                         current_executions = self._parse_executions(line)
                     elif line.startswith('XDIS'):
@@ -84,7 +82,7 @@ class CoverageAnalyzer:
                 raise ValueError("Insufficient instruction data")
             
             hex_str = parts[0].upper()
-            iform = parts[-1].split(',')[0]  # Handle operand variations
+            iform = parts[-1].split(',')[0]
             
             self.instruction_counts[hex_str] += count
             
@@ -211,10 +209,18 @@ class CoverageAnalyzer:
         return spec
 
 if __name__ == '__main__':
-    """Command-line execution example"""
+    """Command-line execution with argument parsing"""
+    parser = argparse.ArgumentParser(description='Instruction Coverage Analyzer')
+    parser.add_argument('--spec-file', default='config/instruction_specs/x86_64.yaml',
+                        help='Path to instruction spec YAML file')
+    parser.add_argument('--sde-file', required=True,
+                        help='Path to SDE mix output file')
+    
+    args = parser.parse_args()
+    
     try:
-        analyzer = CoverageAnalyzer('config/instruction_specs/x86_64.yaml')
-        report = analyzer.analyze(Path('tests/integration/data/cg.A.AVX2-mix-out.txt'))
+        analyzer = CoverageAnalyzer(args.spec_file)
+        report = analyzer.analyze(Path(args.sde_file))
         
         print("\n=== Coverage Analysis Report ===")
         print(f"Total Instructions: {report['summary']['total_instructions']}")
