@@ -21040,3 +21040,50 @@ XTEST:
   isa_set: RTM
   attributes:
   - INVALID
+REP_STOSB:
+  iclass: REP_STOSB
+  extension: BASE
+  category: STRINGOP
+  isa_set: I86
+  attributes:
+  - BYTEOP
+  - FIXED_BASE0
+  - REP
+REP_STOSD:
+  iclass: REP_STOSD
+  extension: BASE
+  category: STRINGOP
+  isa_set: I86
+  attributes:
+  - DWORDOP
+  - FIXED_BASE0
+  - REP
+REP_STOSQ:
+  iclass: REP_STOSQ
+  extension: X86_64
+  category: STRINGOP
+  isa_set: LONGMODE
+  attributes:
+  - QWORDOP
+  - FIXED_BASE0
+  - REP
+SARX_GPR32d_GPR32d:
+  iclass: SARX
+  extension: BMI2
+  category: BITBYTE
+  isa_set: BMI2
+  attributes: []
+XADD_LOCK_MEMv_GPRv:
+  iclass: XADD
+  extension: BASE
+  category: DATAXFER
+  isa_set: I486REAL
+  attributes:
+  - LOCK
+XORPD_XMMxuq_XMMxuq:
+  iclass: XORPD
+  extension: SSE2
+  category: LOGICAL
+  isa_set: SSE2
+  attributes:
+  - SIMD
