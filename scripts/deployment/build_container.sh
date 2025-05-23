@@ -1,0 +1,50 @@
+#!/bin/bash
+# Script to build and run the Docker container for the Intel Agentbot project
+
+set -e
+
+# Configuration
+IMAGE_NAME="intel-agentbot"
+TAG="latest"
+CONTAINER_NAME="intel-agentbot-container"
+PROJECT_DIR="$(pwd)"
+SDE_BINARY="${PROJECT_DIR}/bin/sde"
+XED_BINARY="${PROJECT_DIR}/bin/xed"
+
+# Check for Docker
+if ! command -v docker &> /dev/null; then
+    echo "Error: Docker is not installed. Please install Docker and try again."
+    exit 1
+fi
+
+# Verify SDE and xed binaries exist
+if [[ ! -f "${SDE_BINARY}" ]]; then
+    echo "Error: SDE binary not found at ${SDE_BINARY}"
+    exit 1
+fi
+if [[ ! -f "${XED_BINARY}" ]]; then
+    echo "Error: xed binary not found at ${XED_BINARY}"
+    exit 1
+fi
+
+# Build Docker image
+echo "Building Docker image ${IMAGE_NAME}:${TAG}..."
+docker build -t "${IMAGE_NAME}:${TAG}" .
+
+# Run container to execute tests
+echo "Running tests in container..."
+docker run --rm \
+    --name "${CONTAINER_NAME}" \
+    -v "${PROJECT_DIR}/tests:/app/tests" \
+    "${IMAGE_NAME}:${TAG}" \
+    make test
+
+# Run container to execute stress-ng workflow
+echo "Running stress-ng workflow in container..."
+docker run --rm \
+    --name "${CONTAINER_NAME}" \
+    -v "${PROJECT_DIR}/tests:/app/tests" \
+    "${IMAGE_NAME}:${TAG}" \
+    make stress-ng
+
+echo "Container build and execution completed successfully."
