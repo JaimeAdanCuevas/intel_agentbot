@@ -29,7 +29,20 @@ fi
 
 # Build Docker image
 echo "Building Docker image ${IMAGE_NAME}:${TAG}..."
-docker build -t "${IMAGE_NAME}:${TAG}" .
+
+if [ "$RASP" == "yes" ]; then
+	docker build --build-arg RASP=$RASP --build-arg https_proxy="http://proxy-dmz.intel.com:912" --build-arg http_proxy="http://proxy-dmz.intel.com:912" -t "${IMAGE_NAME}:${TAG}" .
+    if [ $? != 0 ]; then
+        echo "Error: could not build the fedora32-libvirtd image. Exiting."
+        exit 23
+    fi
+else
+	docker build -t "${IMAGE_NAME}:${TAG}" .
+    if [ $? != 0 ]; then
+            echo "Error: could not build the fedora32-libvirtd image. Exiting."
+            exit 23
+    fi
+fi
 
 # Run container to execute tests
 echo "Running tests in container..."
