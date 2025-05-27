@@ -1,6 +1,8 @@
 #!/bin/bash
 # Runs stress-ng under Intel SDE and saves mix output
 
+set -x
+
 set -euo pipefail
 
 # Default values

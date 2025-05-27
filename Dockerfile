@@ -15,11 +15,11 @@ ENV http_proxy=${http_proxy}
 ENV no_proxy="127.0.0.1,localhost,intel.com"
 
 RUN if [ "$RASP" = "yes" ]; then \
-    echo "export RASP=yes" >> /root/.bashrc && \
+    echo 'export RASP=yes' >> /root/.bashrc && \
     echo 'export https_proxy="http://proxy-dmz.intel.com:912"' >> /root/.bashrc && \
     echo 'export http_proxy="http://proxy-dmz.intel.com:912"' >> /root/.bashrc && \
     echo 'export no_proxy="127.0.0.1,localhost,intel.com"' >> /root/.bashrc && \
-    echo 'Acquire::http::Proxy "http://proxy-dmz.intel.com:912";' >> /etc/apt/apt.conf.d/99proxy && \
+    echo 'Acquire::http::Proxy "http://proxy-dmz.intel.com:912";' > /etc/apt/apt.conf.d/99proxy && \
     echo 'Acquire::https::Proxy "http://proxy-dmz.intel.com:912";' >> /etc/apt/apt.conf.d/99proxy; \
 fi
 
@@ -35,7 +35,12 @@ RUN apt-get update && apt-get install -y \
     make \
     wget \
     unzip \
+    vim \
     && rm -rf /var/lib/apt/lists/*
+
+RUN dpkg --add-architecture i386 && \
+    apt update && \
+    apt install -y libc6:i386 libncurses5:i386 libstdc++6:i386
 
 # Copy project files
 COPY . .
@@ -47,8 +52,8 @@ COPY ./bin/xed /app/bin/xed
 RUN chmod +x /app/bin/sde /app/bin/xed
 
 # Create and activate virtual environment
-#RUN python3 -m venv .venv
-#ENV PATH="/app/.venv/bin:$PATH"
+RUN python3 -m venv .venv
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Install Python dependencies
 COPY requirements.txt .
