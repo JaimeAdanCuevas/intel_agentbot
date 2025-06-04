@@ -8,7 +8,7 @@ def track_coverage(report: dict, db_path: Path = Path('data/history/coverage.db'
     c = conn.cursor()
 
     c.execute('''
-        INSERT INTO coverage_history 
+        INSERT INTO coverage_history
         (total_instructions, coverage_percent, top_category)
         VALUES (?, ?, ?)
     ''', (
