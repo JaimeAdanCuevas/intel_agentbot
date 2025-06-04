@@ -8,7 +8,7 @@ import yaml
 import argparse
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, Any
 from collections import defaultdict
 import csv
 
@@ -19,9 +19,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class CoverageAnalyzer:
     """Intel Architecture Instruction Coverage Analysis Engine"""
-    
+
     def __init__(self, spec_path: str, xed_path: str = "./bin/xed"):
         self.spec: Dict[str, Any] = self._load_validated_spec(Path(spec_path))
         self.xed_path = xed_path
@@ -53,7 +54,8 @@ class CoverageAnalyzer:
         try:
             self._process_sde_file(sde_file)
             self._calculate_coverage()
-            logger.info(f"Processed {self.coverage_stats['parsed_lines']} lines, matched {self.coverage_stats['matched_instructions']} instructions")
+            logger.info(f"Processed {self.coverage_stats['parsed_lines']} lines, \
+                        matched {self.coverage_stats['matched_instructions']} instructions")
             return self.generate_report()
         except Exception as e:
             logger.error(f"Analysis failed: {str(e)}", exc_info=True)
@@ -64,7 +66,7 @@ class CoverageAnalyzer:
         current_executions = 0
         in_dynamic_stats = False
         in_count_section = False
-        
+
         with open(sde_file, 'r', encoding='utf-8') as f:
             for line_number, line in enumerate(f, 1):
                 try:
@@ -81,7 +83,7 @@ class CoverageAnalyzer:
                         if line.startswith('TID') or line.startswith('0'):
                             in_count_section = True
                             continue
-                            
+
                         if in_count_section and '*' not in line:
                             parts = line.rsplit(maxsplit=1)
                             if len(parts) == 2:
@@ -125,18 +127,18 @@ class CoverageAnalyzer:
         try:
             _, remainder = line.split(':', 1)
             parts = remainder.strip().split()
-            
+
             if len(parts) < 3:
                 raise ValueError("Insufficient instruction data")
-            
+
             hex_str = parts[1].upper()
             mnemonic = parts[2].split()[0].upper()
-            
+
             iform = self._decode_instruction(hex_str)
-            
+
             logger.debug(f"Processing instruction: hex={hex_str}, mnemonic={mnemonic}, iform={iform}")
             self.instruction_counts[hex_str] += count
-            
+
             if iform:
                 self.iform_counts[iform] += count
                 if iform in self.spec:
@@ -146,9 +148,9 @@ class CoverageAnalyzer:
                     logger.debug(f"IFORM {iform} not found in spec")
 
         except (ValueError, IndexError) as e:
-            logger.warning(f"Invalid instruction line: {line.strip()}")
+            logger.warning(f"Invalid instruction line: {line.strip()}, error: {e}")
         except KeyError as e:
-            logger.warning(f"Unknown instruction format: {iform}")
+            logger.warning(f"Unknown instruction format: {iform}, error: {e}")
 
     def _decode_instruction(self, hex_str: str) -> str:
         """Decode hex instruction using xed to get IFORM"""
@@ -186,7 +188,7 @@ class CoverageAnalyzer:
         try:
             total = self.coverage_stats['total_instructions']
             covered = len({iform for iform in self.spec if self.iform_counts.get(iform, 0) > 0})
-            
+
             self.coverage_stats['coverage_percent'] = round(
                 (covered / total * 100) if total > 0 else 0, 2
             )
@@ -200,7 +202,7 @@ class CoverageAnalyzer:
                 key=lambda x: x[1],
                 reverse=True
             )[:10]
-            
+
         except ZeroDivisionError:
             logger.error("Empty instruction spec - cannot calculate coverage")
             self.coverage_stats['coverage_percent'] = 0.0
@@ -229,7 +231,7 @@ class CoverageAnalyzer:
             'details': {
                 'uncovered_instructions': self.coverage_stats['uncovered'],
                 'top_used_instructions': [
-                    {'hex': k, 'count': v} 
+                    {'hex': k, 'count': v}
                     for k, v in self.coverage_stats['top_instructions']
                 ],
                 'spec_validation': self._validate_spec_coverage()
@@ -243,7 +245,7 @@ class CoverageAnalyzer:
             iform for iform, count in self.iform_counts.items()
             if count > 0
         )
-        
+
         return {
             'missing_spec_entries': list(observed_iforms - spec_iforms),
             'unused_spec_entries': list(spec_iforms - observed_iforms),
@@ -272,26 +274,26 @@ class CoverageAnalyzer:
 
         required_fields = {'iclass', 'category', 'isa_set', 'attributes'}
         validation_errors = False
-        
+
         for iform, data in spec.items():
             missing = required_fields - data.keys()
             if missing:
                 logger.error(f"Missing fields in {iform}: {missing}")
                 validation_errors = True
-                
+
         if validation_errors:
             raise ValueError("Invalid spec entries detected")
 
         return spec
-    
+
     def export_csv_report(self, output_path: str):
         """Export coverage report to CSV format"""
         try:
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-            
+
             with open(output_path, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                
+
                 # Write summary section
                 writer.writerow(["Metric", "Value"])
                 writer.writerow(["Total Instructions", self.coverage_stats['total_instructions']])
@@ -301,17 +303,17 @@ class CoverageAnalyzer:
                 writer.writerow(["Parsed Lines", self.coverage_stats['parsed_lines']])
                 writer.writerow(["Matched Executions", self.coverage_stats['matched_instructions']])
                 writer.writerow([])  # Empty row separator
-                
+
                 # Write detailed instruction data
                 writer.writerow([
                     "iclass", "extension", "category", "iform",
                     "isa_set", "attributes", "count", "covered"
                 ])
-                
+
                 for iform in sorted(self.spec.keys()):
                     spec_entry = self.spec[iform]
                     count = self.iform_counts.get(iform, 0)
-                    
+
                     writer.writerow([
                         spec_entry['iclass'],
                         spec_entry['extension'],
@@ -322,12 +324,13 @@ class CoverageAnalyzer:
                         count,
                         "Yes" if count > 0 else "No"
                     ])
-                    
+
             logger.info(f"CSV report saved to {output_path}")
-            
+
         except Exception as e:
             logger.error(f"Failed to generate CSV report: {str(e)}")
             raise
+
 
 if __name__ == '__main__':
     """Command-line execution with argument parsing"""
@@ -340,15 +343,14 @@ if __name__ == '__main__':
                         help='Path to xed binary')
     parser.add_argument('--output-csv', default='tests/integration/data/coverage_report.csv',
                         help='Output path for CSV report')
-    
-    
+
     args = parser.parse_args()
-    
+
     try:
         analyzer = CoverageAnalyzer(args.spec_file, args.xed_path)
         report = analyzer.analyze(Path(args.sde_file))
         analyzer.export_csv_report(args.output_csv)
-        
+
         print("\n=== Coverage Analysis Report ===")
         print(f"Total Instructions: {report['summary']['total_instructions']}")
         print(f"Unique Covered: {report['summary']['covered_instructions']}")
@@ -357,7 +359,7 @@ if __name__ == '__main__':
         print(f"Total Executions: {report['summary']['matched_instructions']}")
         print(f"Uncovered Instructions: {len(report['details']['uncovered_instructions'])}")
         print(f"CSV Report: {args.output_csv}")
-        
+
     except Exception as e:
         logger.critical(f"Critical failure: {str(e)}")
         exit(1)

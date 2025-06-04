@@ -2,10 +2,12 @@ import pytest
 from src.core.coverage.analyzer import CoverageAnalyzer
 from pathlib import Path
 
+
 def test_analyzer_init():
     analyzer = CoverageAnalyzer('config/instruction_specs/x86_64.yaml')
     assert analyzer is not None
     assert len(analyzer.spec) > 0
+
 
 def test_analyzer_stress_ng():
     analyzer = CoverageAnalyzer('config/instruction_specs/x86_64.yaml', xed_path='./bin/xed')
@@ -18,5 +20,5 @@ def test_analyzer_stress_ng():
     assert report['summary']['coverage_percent'] > 0, "Coverage should be non-zero"
     assert report['summary']['matched_instructions'] > 0, "Should match at least one instruction"
     assert len(report['details']['uncovered_instructions']) == (
-    report['summary']['total_instructions'] - report['summary']['covered_instructions']
-    ), "Uncovered instructions count mismatch"
+        report['summary']['total_instructions'] - report['summary']['covered_instructions']
+        ), "Uncovered instructions count mismatch"
