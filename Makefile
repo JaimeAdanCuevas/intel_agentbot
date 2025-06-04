@@ -3,7 +3,7 @@
 all: test analyze stress-ng
 
 test:
-	. .venv/bin/activate && PYTHONPATH=$(PWD) pytest -v tests/
+	.venv/bin/python3 -m pytest -v tests/
 
 analyze:
 	. .venv/bin/activate && PYTHONPATH=$(PWD) python -m src.core.coverage.analyzer --sde-file tests/integration/data/cg.A.AVX2-mix-out.txt --xed-path ./bin/xed
