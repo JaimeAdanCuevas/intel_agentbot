@@ -1,0 +1,7 @@
+# Basic IFORM suggestions for config/instruction_specs/x86_64.yaml
+-:
+  iclass: -
+  extension: BASE
+  category: UNKNOWN
+  isa_set: UNKNOWN
+  attributes: []

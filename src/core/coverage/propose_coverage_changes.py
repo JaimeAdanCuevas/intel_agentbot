@@ -23,6 +23,7 @@ SPEC_FILE = "config/instruction_specs/x86_64.yaml"
 os.environ['http_proxy'] = 'http://proxy-dmz.intel.com:912'
 os.environ['https_proxy'] = 'http://proxy-dmz.intel.com:912'
 
+
 def get_access_token():
     """Obtain access token from Intel's auth API."""
     resp = requests.post(AUTH_URL, data={
@@ -33,6 +34,7 @@ def get_access_token():
     if resp.status_code != 200:
         raise Exception(f"Token request failed: {resp.status_code} {resp.text}")
     return resp.json()['access_token']
+
 
 def create_llm():
     """Create LangChain LLM client."""
@@ -46,6 +48,7 @@ def create_llm():
         api_key=access_token,
         base_url=BASE_URL
     )
+
 
 def read_unmatched_iforms(log_file: Path = None, stderr_output: str = None):
     """Extract unmatched IFORMs from log file or stderr output."""
@@ -156,13 +159,20 @@ def extract_yaml_suggestions(suggestions: str):
 
 
 def apply_yaml_suggestions(yaml_content: str, spec_file: Path):
-    """Append YAML suggestions to the spec file with user confirmation."""
+    """Append YAML suggestions to the spec file with user confirmation or default fallback."""
     if not yaml_content.strip():
         print("No YAML suggestions to apply.")
         return
+
     print("\nProposed YAML additions:")
     print(yaml_content)
-    response = input(f"\nAppend these to {spec_file}? (y/n): ").strip().lower()
+
+    # Fallback to environment variable or 'n' if stdin is unavailable
+    try:
+        response = input(f"\nAppend these to {spec_file}? (y/n): ").strip().lower()
+    except EOFError:
+        response = os.getenv("AUTO_APPEND_YAML", "n").strip().lower()
+
     if response == 'y':
         with open(spec_file, 'a') as f:
             f.write('\n' + yaml_content)
@@ -170,12 +180,14 @@ def apply_yaml_suggestions(yaml_content: str, spec_file: Path):
     else:
         print("Suggestions not applied.")
 
+
 def write_suggestions(suggestions: str):
     """Write AI suggestions to file."""
     Path(OUTPUT_SUGGESTIONS).parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_SUGGESTIONS, 'w') as f:
         f.write(suggestions)
     print(f"Suggestions saved to {OUTPUT_SUGGESTIONS}")
+
 
 def main():
     """Main function to propose coverage changes."""

@@ -1,0 +1,86 @@
+To address the task, we need to propose entries for the `x86_64.yaml` file to cover unmatched IFORMs and suggest modifications to the `run_stress_ng_sde.sh` script to increase instruction coverage.
+
+### YAML Suggestions
+
+Based on the SDE output snippet, we can identify some common instructions and propose entries for them. Here are some suggestions:
+
+```yaml
+# Suggested IFORMs
+ADD_RAX_IMM8:
+  iclass: ADD
+  extension: BASE
+  category: BINARY
+  isa_set: I86
+  attributes: [MODRM, IMM8]
+
+CMP_RAX_RCX:
+  iclass: CMP
+  extension: BASE
+  category: BINARY
+  isa_set: I86
+  attributes: [MODRM]
+
+JZ_REL8:
+  iclass: JZ
+  extension: BASE
+  category: CONTROL_FLOW
+  isa_set: I86
+  attributes: [RELBR]
+
+MOVZX_ECX_MEM:
+  iclass: MOVZX
+  extension: BASE
+  category: DATA_TRANSFER
+  isa_set: I86
+  attributes: [MODRM, MEM]
+
+LEA_R8_MEM:
+  iclass: LEA
+  extension: BASE
+  category: DATA_TRANSFER
+  isa_set: I86
+  attributes: [MODRM, MEM]
+
+TEST_CL_CL:
+  iclass: TEST
+  extension: BASE
+  category: LOGICAL
+  isa_set: I86
+  attributes: [MODRM]
+
+MOV_MEM_CL:
+  iclass: MOV
+  extension: BASE
+  category: DATA_TRANSFER
+  isa_set: I86
+  attributes: [MODRM, MEM]
+
+REP_STOSB:
+  iclass: STOSB
+  extension: BASE
+  category: STRING_OP
+  isa_set: I86
+  attributes: [REP]
+
+VMOVDQA_YMM_MEM:
+  iclass: VMOVDQA
+  extension: AVX
+  category: DATA_TRANSFER
+  isa_set: AVX
+  attributes: [MODRM, MEM]
+```
+
+### Stress-ng Script Suggestions
+
+To increase coverage, we can modify the `run_stress_ng_sde.sh` script to include additional stressors and extend the runtime. Here is a bash snippet with suggested changes:
+
+```bash
+# Suggested changes to run_stress_ng_sde.sh
+
+#!/bin/bash
+
+# Increase runtime to 60 seconds per stressor
+STRESS_RUNTIME=60
+
+# Add more CPU methods to increase instruction diversity
+CPU_METHODS=("all" "matrixprod" "hanoi" "ackermann" "bitops" "crc16" "crc32" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "dither" "d
