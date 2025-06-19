@@ -2,8 +2,8 @@ import requests
 import os
 
 # Set proxy settings
-os.environ['http_proxy'] = 'http://proxy-chain.intel.com:912'
-os.environ['https_proxy'] = 'http://proxy-chain.intel.com:912'
+os.environ['http_proxy'] = 'http://proxy-dmz.intel.com:912'
+os.environ['https_proxy'] = 'http://proxy-dmz.intel.com:912'
 
 # Define the authentication endpoint and credentials
 auth_url = "https://apis-internal.intel.com/v1/auth/token"
