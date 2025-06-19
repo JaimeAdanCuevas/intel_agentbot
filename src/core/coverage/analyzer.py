@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, Any
 from collections import defaultdict
 import csv
+import json
 
 # Configure logging
 logging.basicConfig(
@@ -330,6 +331,82 @@ class CoverageAnalyzer:
         except Exception as e:
             logger.error(f"Failed to generate CSV report: {str(e)}")
             raise
+
+        self.generate_coverage_chart(output_path)
+
+    def generate_coverage_chart(self, output_csv):
+        """Generate Chart.js configuration for coverage visualization."""
+        output_csv = Path(output_csv)
+        chart_config = {
+            "type": "bar",
+            "data": {
+                "labels": ["Covered", "Uncovered"],
+                "datasets": [{
+                    "label": "Instruction Coverage",
+                    "data": [
+                        self.coverage_stats['covered'],
+                        self.coverage_stats['total_instructions'] - self.coverage_stats['covered']
+                    ],
+                    "backgroundColor": ["#36A2EB", "#FF6384"]
+                }]
+            },
+            "options": {
+                "scales": {
+                    "y": {
+                        "beginAtZero": True,
+                        "title": {
+                            "display": True,
+                            "text": "Number of Instructions"
+                        }
+                    },
+                    "x": {
+                        "title": {
+                            "display": True,
+                            "text": "Coverage Status"
+                        }
+                    }
+                },
+                "plugins": {
+                    "title": {
+                        "display": True,
+                        "text": "Instruction Coverage Summary"
+                    }
+                }
+            }
+        }
+
+        chart_json_path = output_csv.parent / "coverage_chart.json"
+        chart_json_path.write_text(json.dumps(chart_config, indent=2))
+        self.generate_chart_html(chart_json_path)
+
+    def generate_chart_html(self, chart_json_path: Path):
+        """Generate HTML file to render Chart.js chart."""
+        chart_json_path = Path(chart_json_path)
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Instruction Coverage Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>Instruction Coverage Chart</h2>
+    <canvas id="coverageChart" width="600" height="400"></canvas>
+    <script>
+        fetch('{chart_json_path.name}')
+            .then(response => response.json())
+            .then(config => {{
+                const ctx = document.getElementById('coverageChart').getContext('2d');
+                new Chart(ctx, config);
+            }});
+    </script>
+</body>
+</html>
+        """
+        html_path = chart_json_path.with_suffix('.html')
+        html_path.write_text(html_content)
+        print(f"Coverage chart HTML generated at: {html_path}")
 
 
 if __name__ == '__main__':
