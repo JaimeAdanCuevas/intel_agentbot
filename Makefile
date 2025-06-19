@@ -10,7 +10,11 @@ analyze:
 
 stress-ng:
 	./scripts/deployment/run_stress_ng_sde.sh
-	. .venv/bin/activate && PYTHONPATH=$(PWD) python -m src.core.coverage.analyzer --sde-file tests/integration/data/stress-ng-cpu-mix-out.txt --xed-path ./bin/xed
+	. .venv/bin/activate && PYTHONPATH=$(PWD) python -m src.core.coverage.analyzer --sde-file tests/integration/data/stress-ng-cpu-mix-out.txt \
+	--output-csv tests/integration/data/coverage_report.csv 2> tests/integration/data/stress-ng-cpu-mix-out.log --xed-path ./bin/xed
+
+propose:
+	.venv/bin/python3 src/core/coverage/propose_coverage_changes.py
 
 clean:
 	find . -name '*.pyc' -delete

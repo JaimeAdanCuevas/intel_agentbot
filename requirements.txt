@@ -6,3 +6,4 @@ openai
 pytest
 argparse
 flake8
+langchain-openai>=0.1.0
