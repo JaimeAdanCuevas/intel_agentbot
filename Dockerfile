@@ -1,5 +1,5 @@
-# Use Ubuntu 22.04 as base image
-FROM ubuntu:22.04
+# Use Ubuntu 24.04 as base image
+FROM ubuntu:24.04
 
 LABEL key="Jaime Cuevas <jaime.cuevas.ramirez@intel.com>" \
       version="1.0" \
@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN dpkg --add-architecture i386 && \
     apt update && \
-    apt install -y libc6:i386 libncurses5:i386 libstdc++6:i386
+    apt install -y libc6:i386 libncurses6:i386 libstdc++6:i386
 
 # Copy project files
 COPY . .
