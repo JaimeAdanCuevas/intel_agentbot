@@ -1,0 +1,45 @@
+{
+  "type": "bar",
+  "data": {
+    "labels": [
+      "Covered",
+      "Uncovered"
+    ],
+    "datasets": [
+      {
+        "label": "Instruction Coverage",
+        "data": [
+          266,
+          2753
+        ],
+        "backgroundColor": [
+          "#36A2EB",
+          "#FF6384"
+        ]
+      }
+    ]
+  },
+  "options": {
+    "scales": {
+      "y": {
+        "beginAtZero": true,
+        "title": {
+          "display": true,
+          "text": "Number of Instructions"
+        }
+      },
+      "x": {
+        "title": {
+          "display": true,
+          "text": "Coverage Status"
+        }
+      }
+    },
+    "plugins": {
+      "title": {
+        "display": true,
+        "text": "Instruction Coverage Summary"
+      }
+    }
+  }
+}

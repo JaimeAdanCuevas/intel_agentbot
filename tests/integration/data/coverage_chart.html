@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Instruction Coverage Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>Instruction Coverage Chart</h2>
+    <canvas id="coverageChart" width="600" height="400"></canvas>
+    <script>
+        fetch('coverage_chart.json')
+            .then(response => response.json())
+            .then(config => {
+                const ctx = document.getElementById('coverageChart').getContext('2d');
+                new Chart(ctx, config);
+            });
+    </script>
+</body>
+</html>
+        
