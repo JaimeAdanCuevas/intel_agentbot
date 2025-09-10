@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instruction Coverage Report</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Coverage Summary</h1>
+    <p>Total Instructions: {{ summary.total_instructions }}</p>
+    <div id="coverageChart"></div>
+    <script>
+        var data = [{
+            values: [{{ summary.coverage_percent }}, {{ 100 - summary.coverage_percent }}],
+            labels: ['Covered', 'Uncovered'],
+            type: 'pie'
+        }];
+        Plotly.newPlot('coverageChart', data);
+    </script>
+</body>
+</html>

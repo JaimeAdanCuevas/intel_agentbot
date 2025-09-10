@@ -1,0 +1,9 @@
+PyYAML
+rich
+pytest
+python-dotenv
+openai
+pytest
+argparse
+flake8
+langchain-openai>=0.1.0

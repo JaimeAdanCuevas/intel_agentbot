@@ -1,0 +1,1 @@
+# Intel Coverage Agent Architecture
